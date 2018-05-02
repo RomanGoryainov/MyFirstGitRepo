@@ -1,4 +1,4 @@
-- name: Install MariaDB 10.2 server
+- name: Install PHP-FPM Module
   hosts: centos-node2.random.com
   order: sorted
   become: True
@@ -33,3 +33,13 @@
          - apr
          - apr-util
         state: latest
+    - name: Update php-fpm www.conf file
+      lineinfile:
+         state=present
+         dest=/etc/php-fpm.d/www.conf
+         regexp="{{ item.regexp }}"
+         line="{{ item.line }}"
+      with_items:
+             - { regexp: '^listen = ' , line: 'listen = var/run/php-fpm.sock' }
+             - { regexp: '^user = ' , line: 'user = nginx' }
+             - { regexp: '^group = ' , line: 'group = nginx' }
