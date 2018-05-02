@@ -1,0 +1,35 @@
+- name: Install MariaDB 10.2 server
+  hosts: centos-node2.random.com
+  order: sorted
+  become: True
+  become_user: root
+  tasks:
+    - name: Install php-fpm
+      yum:
+        name:
+         - php-fpm
+         - php-devel
+         - php-gd
+         - php-pear
+         - php-curl
+         - php-mcrypt
+         - php-imap
+         - php-apc
+         - php-cgi
+         - php-mysql
+         - php-getid3
+         - php-mbstring
+         - php-PHPMailer
+         - php-IDNA_Convert
+         - php-simplepie
+         - php-intl
+         - php-ldap
+         - php-odbc
+         - php-xml
+         - php-xmlrpc
+         - php-snmp
+         - php-soap
+         - php-pecl-memcache
+         - apr
+         - apr-util
+        state: latest

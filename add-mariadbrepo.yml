@@ -1,0 +1,13 @@
+- name: Add MariaDB Repo
+  hosts: centos-node2.random.com
+  become: True
+  become_user: root
+  tasks:
+    - name: Install MariaDB Repository
+      yum_repository:
+        name: mariadb
+        description: MariaDB Repository
+        baseurl: http://yum.mariadb.org/10.2/centos7-amd64
+        gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+        gpgcheck: yes
+        includepkgs: MariaDB*
