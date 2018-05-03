@@ -1,0 +1,24 @@
+- name: Install MariaDB 10.2 server
+  hosts: centos-node2.random.com
+  order: sorted
+  become: True
+  become_user: root
+  tasks:
+    - name: Install MariaDB Repository
+      yum_repository:
+        name: mariadb
+        description: MariaDB Repository
+        baseurl: http://yum.mariadb.org/10.2/centos7-amd64
+        gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+        gpgcheck: yes
+        includepkgs: MariaDB*
+    - name: Install mariadb server
+      yum:
+        name:
+         - MariaDB-server
+         - MariaDB-common
+         - MariaDB-client
+         - MariaDB-backup
+         - MariaDB-compat
+        enablerepo: mariadb,base,updates,extras,epel
+        state: latest

@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  pre_tasks:
+  - name: Send Pre Slack notification
+    slack:
+      token: T7RV0H9C7/BAH9Y5MRV/KHEqC2mVHY1Zbxlf6faf8OHv
+      msg: 'Test Pre Tasks Slack message from {{ inventory_hostname }}'
+      channel: #ansible_notification
+      username: 'Ansible on {{ inventory_hostname }}'
+      color: good
+  post_tasks:
+  - name: Send Post Tasks Slack notification
+    slack:
+      token: T7RV0H9C7/BAH9Y5MRV/KHEqC2mVHY1Zbxlf6faf8OHv
+      msg: 'Test Post Tasks Slack message from {{ inventory_hostname }}'
+      channel: #ansible_notification
+      username: 'Ansible on {{ inventory_hostname }}'
+      color: good
+  tasks:
+   - name: Send Slack notification
+     slack:
+       token: T7RV0H9C7/BAH9Y5MRV/KHEqC2mVHY1Zbxlf6faf8OHv
+       msg: ">*Test Slack message* from {{ inventory_hostname }} as `for` {{ ansible_date_time.date }}. \nEmail <mailto:test@random.com|Test>. \nA <http://google.com|link>."
+       channel: "#ansible_notification"
+       username: "Ansible on {{ inventory_hostname }}"

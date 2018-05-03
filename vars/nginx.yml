@@ -1,0 +1,6 @@
+server_name: centos-node2.random.com
+cert_file: /etc/nginx/ssl/centos-node2.cer
+key_file: /etc/nginx/ssl/centos-node2.key
+config_file: /etc/nginx/nginx.conf
+ssl_config_file: /etc/nginx/conf.d/ssl.conf
+workers_number: "{{ ansible_processor_vcpus }} * 2 + 1"

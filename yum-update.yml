@@ -1,0 +1,15 @@
+- name: Enable EPEL Repository and update all servers
+  hosts: allservers
+  order: sorted
+  become: True
+  become_user: root
+  tasks:
+    - name: Install EPEL7 Repository
+      yum:
+        name: 'epel-release'
+        state: latest
+
+    - name: upgrade all packages
+      yum:
+        name: '*'
+        state: latest
