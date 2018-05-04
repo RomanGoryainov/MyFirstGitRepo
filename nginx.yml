@@ -6,7 +6,7 @@
     - vars/nginx.yml
   vars:
    tls_enabled: True
-   php_enabled: False
+   php_enabled: True
 #
 # Main Tasks list
 #

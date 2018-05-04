@@ -33,6 +33,7 @@
          - apr
          - apr-util
         state: latest
+#
     - name: Update php-fpm www.conf file
       lineinfile:
          state=present
@@ -40,6 +41,12 @@
          regexp="{{ item.regexp }}"
          line="{{ item.line }}"
       with_items:
-             - { regexp: '^listen = ' , line: 'listen = var/run/php-fpm.sock' }
+             - { regexp: '^listen = ' , line: 'listen = /var/run/php-fpm.sock' }
              - { regexp: '^user = ' , line: 'user = nginx' }
              - { regexp: '^group = ' , line: 'group = nginx' }
+#
+    - name: Enable php-fpm service
+      service:
+        name: php-fpm
+        enabled: yes
+        state: started
