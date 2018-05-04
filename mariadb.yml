@@ -1,8 +1,14 @@
 - name: Install MariaDB 10.2 server
   hosts: centos-node2.random.com
   order: sorted
+  gather_facts: True
   become: True
   become_user: root
+  vars:
+   root_remote: True
+   test_database: True
+   anonymous_disable: True
+   host_name: "{{ inventory_hostname }}"
   tasks:
     - name: Install MariaDB Repository
       yum_repository:
@@ -12,6 +18,7 @@
         gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
         gpgcheck: yes
         includepkgs: MariaDB*
+#
     - name: Install mariadb server
       yum:
         name:
@@ -20,5 +27,31 @@
          - MariaDB-client
          - MariaDB-backup
          - MariaDB-compat
+         - MySQL-python
         enablerepo: mariadb,base,updates,extras,epel
         state: latest
+#
+    - name: Check and enable MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: true
+#
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+      when: test_database
+#
+    - name: Remove anonymous user
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+      when: anonymous_disable
+#
+    - name: Remove root remote login
+      mysql_user: name=root host={{ host_name }} state=absent
+      when: root_remote
+#
+    - debug: var=host_name

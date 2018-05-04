@@ -1,4 +1,4 @@
-server_name: centos-node2.random.com
+server_name: {{ hostvars[inventory_hostname] }}
 cert_file: /etc/nginx/ssl/centos-node2.cer
 key_file: /etc/nginx/ssl/centos-node2.key
 config_file: /etc/nginx/nginx.conf
