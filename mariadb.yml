@@ -9,6 +9,7 @@
    test_database: True
    anonymous_disable: True
    host_name: "{{ inventory_hostname }}"
+   root_db_password: 111111
   tasks:
     - name: Install MariaDB Repository
       yum_repository:
@@ -43,6 +44,13 @@
         state: absent
       when: test_database
 #
+    - name: Remove test database records from mysql db
+      command: 'mysql -ne "{{ item }}"'
+      with_items:
+        - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+      changed_when: False
+      when: test_database
+#
     - name: Remove anonymous user
       mysql_user:
         name: ''
@@ -54,4 +62,12 @@
       mysql_user: name=root host={{ host_name }} state=absent
       when: root_remote
 #
-    - debug: var=host_name
+    - name: Add .my.cnf with root password
+      template: src=templates/my.cnf.j2 dest=/root/.my.cnf owner=root group=root mode=0600
+#
+    - name: Set root Password for localhost
+      mysql_user: check_implicit_admin=yes name=root host={{ item }} password={{ root_db_password }} state=present
+      with_items:
+          - localhost
+          - 127.0.0.1
+          - ::1
