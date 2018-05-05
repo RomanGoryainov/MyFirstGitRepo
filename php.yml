@@ -1,5 +1,5 @@
 - name: Install PHP-FPM Module
-  hosts: centos-node2.random.com
+  hosts: webcluster
   order: sorted
   become: True
   become_user: root
@@ -44,6 +44,17 @@
              - { regexp: '^listen = ' , line: 'listen = /var/run/php-fpm.sock' }
              - { regexp: '^user = ' , line: 'user = nginx' }
              - { regexp: '^group = ' , line: 'group = nginx' }
+#
+    - name: Update php.ini file
+      lineinfile:
+         state=present
+         dest=/etc/php.ini
+         regexp="{{ item.regexp }}"
+         line="{{ item.line }}"
+      with_items:
+             - { regexp: 'cgi.fix_pathinfo' , line: 'cgi.fix_pathinfo = 0' }
+             - { regexp: 'date.timezone' , line: 'date.timezone = Asia/Almaty' }
+             - { regexp: 'register_globals' , line: 'register_globals = 0' }
 #
     - name: Enable php-fpm service
       service:

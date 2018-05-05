@@ -1,5 +1,5 @@
 ---
-- hosts: centos-node2.random.com
+- hosts: webcluster
   become: True
   become_user: root
   vars_files:
@@ -11,10 +11,26 @@
 # Main Tasks list
 #
   tasks:
+    - name: wait for ssh server to be running
+      local_action: wait_for port=22 host="{{ inventory_hostname }}" search_regex=OpenSSH
+#
+    - name: Install EPEL7 Repository
+      yum:
+        name: 'epel-release'
+        state: latest
+        update_cache: yes
+#
+    - name: copy epel repo files
+      copy: src=files/{{ item }} dest=/etc/yum.repos.d mode="0644"
+      with_items:
+         - epel.repo
+         - epel-testing.repo
+#
     - name: upgrade all packages
       yum:
         name: '*'
         state: latest
+        update_cache: yes
 
     - name: install nginx
       yum:
@@ -22,7 +38,7 @@
         state: latest
 
     - name: copy config file
-      copy: src=files/nginx.conf dest={{ config_file }} mode="0644"
+      template: src=templates/nginx.conf.j2 dest={{ config_file }} mode="0644"
 
     - name: copy index.html
       template:
@@ -41,13 +57,13 @@
       when: tls_enabled
 
     - name: copy key file
-      copy: src=files/centos-node2/centos-node2.key dest={{ key_file }} owner=root mode=0600
+      copy: src=files/random_wildmask/random.key dest={{ key_file }} owner=root mode=0600
       when: tls_enabled
       notify:
          - restart nginx
 
     - name: copy cert file
-      copy: src=files/centos-node2/centos-node2.cer dest={{ cert_file }} owner=root mode=0644
+      copy: src=files/random_wildmask/random.cer dest={{ cert_file }} owner=root mode=0644
       when: tls_enabled
       notify:
          - restart nginx
@@ -60,7 +76,7 @@
 #        creates: /etc/nginx/ssl/dhparam.pem
 
     - name: copy ssl config file
-      template: src=files/ssl.conf.j2 dest={{ ssl_config_file }} mode="0644"
+      template: src=templates/ssl.conf.j2 dest={{ ssl_config_file }} mode="0644"
       when: tls_enabled
       notify:
          - restart nginx

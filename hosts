@@ -50,12 +50,13 @@ centos-node3.random.com
 centos-node4.random.com
 centos-node5.random.com
 centos-node6.random.com
+centos-node7.random.com
 
 [allservers]
 centos-node[2:6].random.com
 
 [loadbalancer]
-centos-node6.random.com
+centos-node7.random.com
 
 [webservers]
 centos-node2.random.com
@@ -64,13 +65,13 @@ centos-node2.random.com
 centos-node[2:3].random.com
 
 [appservers]
-centos-node3.random.com
-
-[dbservers]
 centos-node4.random.com
 
+[dbservers]
+centos-node5.random.com
+
 [dbcluster]
-centos-node[4:5].random.com
+centos-node[5:6].random.com
 
 [application:children]
 webservers

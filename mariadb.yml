@@ -4,12 +4,13 @@
   gather_facts: True
   become: True
   become_user: root
+  vars_files:
+    - vars/secrets.yml
   vars:
    root_remote: True
    test_database: True
    anonymous_disable: True
    host_name: "{{ inventory_hostname }}"
-   root_db_password: 111111
   tasks:
     - name: Install MariaDB Repository
       yum_repository:
