@@ -1,0 +1,58 @@
+---
+- hosts: centos-node2.random.com
+  become: True
+  become_user: root
+  tasks:
+   - name: create mysql database
+     mysql_db:
+       name: wordpress
+       state: present
+#
+   - name: create mysql user
+     mysql_user:
+       name: wuser
+       password: "{{ lookup ('password','files/wordpress_password.txt') }}"
+       host: '%'
+       priv: 'wordpress.*:ALL'
+       state: present
+#
+- hosts: webservers
+  become: True
+  become_user: root
+  vars:
+   wp_mysql_db: wordpress
+   wp_mysql_host: localhost
+   wp_mysql_user: wuser
+#
+  tasks:
+   - name: Copy archive to web
+     copy:
+      src: files/wordpress-4.9.5.tar.gz
+      dest: /tmp
+      mode: "0750"
+      owner: root
+     register: arch
+#
+#   - debug: var=arch
+#
+   - name: Unarchive wordpress
+     unarchive:
+      src: "{{ arch.dest }}"
+      dest: /usr/share/nginx/html
+      owner: nginx
+      group: nginx
+      remote_src: True
+#
+   - name: Create wordpress config file
+     command: mv /usr/share/nginx/html/wordpress/wp-config-sample.php  /usr/share/nginx/html/wordpress/wp-config.php creates=/usr/share/nginx/html/wordpress/wp-config.php
+#
+   - name: configure wordpress config file
+     lineinfile:
+       dest=/usr/share/nginx/html/wordpress/wp-config.php
+       regexp="{{ item.regexp }}"
+       line="{{ item.line }}"
+     with_items:
+         - {'regexp': "define\\('DB_NAME', '(.)+'\\);", 'line': "define('DB_NAME', '{{wp_mysql_db}}');"}
+         - {'regexp': "define\\('DB_USER', '(.)+'\\);", 'line': "define('DB_USER', '{{wp_mysql_user}}');"}
+         - {'regexp': "define\\('DB_PASSWORD', '(.)+'\\);", 'line': "define('DB_PASSWORD', '{{ lookup ( 'file','files/wordpress_password.txt' )}}');"}
+         - {'regexp': "define\\('DB_HOST', '(.)+'\\);", 'line': "define('DB_HOST', '{{wp_mysql_host}}');"}
