@@ -1,5 +1,5 @@
 ---
-- hosts: webcluster
+- hosts: centos-node2.random.com
   become: True
   become_user: root
   vars_files:

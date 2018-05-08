@@ -40,6 +40,7 @@ http {
         listen       80 default_server;
         server_name  localhost, {{ server_name }};
         root         /usr/share/nginx/html;
+        index        index.php index.html
 
         # Load configuration files for the default server block.
         include /etc/nginx/default.d/*.conf;

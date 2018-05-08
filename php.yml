@@ -1,5 +1,5 @@
 - name: Install PHP-FPM Module
-  hosts: webcluster
+  hosts: centos-node2.random.com
   order: sorted
   become: True
   become_user: root
