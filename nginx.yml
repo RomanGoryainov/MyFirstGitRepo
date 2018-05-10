@@ -6,6 +6,7 @@
     - vars/nginx.yml
   vars:
    tls_enabled: True
+   dhparam_enabled: False
    php_enabled: True
 #
 # Main Tasks list
@@ -68,12 +69,12 @@
       notify:
          - restart nginx
 
-#    - name: create dhparam file
-#      command: openssl dhparam -out dhparam.pem 4096
-#      when: tls_enabled
-#      args:
-#        chdir: /etc/nginx/ssl
-#        creates: /etc/nginx/ssl/dhparam.pem
+    - name: create dhparam file
+      command: openssl dhparam -out dhparam.pem 4096
+      when: dhparam_enabled
+      args:
+        chdir: /etc/nginx/ssl
+        creates: /etc/nginx/ssl/dhparam.pem
 
     - name: copy ssl config file
       template: src=templates/ssl.conf.j2 dest={{ ssl_config_file }} mode="0644"

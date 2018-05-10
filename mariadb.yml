@@ -1,5 +1,5 @@
 - name: Install MariaDB 10.2 server
-  hosts: centos-node2.random.com
+  hosts: centos-node5.random.com
   order: sorted
   gather_facts: True
   become: True
@@ -72,6 +72,19 @@
           - localhost
           - 127.0.0.1
           - ::1
-# Firewall
-# bind address
-# restart service
+# 
+    - name: configure firewalld
+      firewalld:
+        port: 3306/tcp
+        zone: public
+        state: enabled
+        permanent: true
+#
+    - name: add bindaddress
+      template: src=templates/bindaddress.cnf.j2 dest=/etc/my.cnf.d/bindaddress.cnf owner=root group=root mode=0644
+#
+    - name: restart service
+      service:
+       name: mysqld
+       enabled: yes
+       state: restarted

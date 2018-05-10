@@ -45,17 +45,6 @@
              - { regexp: '^user = ' , line: 'user = nginx' }
              - { regexp: '^group = ' , line: 'group = nginx' }
 #
-    - name: Update php.ini file
-      lineinfile:
-         state=present
-         dest=/etc/php.ini
-         regexp="{{ item.regexp }}"
-         line="{{ item.line }}"
-      with_items:
-             - { regexp: 'cgi.fix_pathinfo' , line: 'cgi.fix_pathinfo = 0' }
-             - { regexp: 'date.timezone' , line: 'date.timezone = Asia/Almaty' }
-             - { regexp: 'register_globals' , line: 'register_globals = 0' }
-#
     - name: Enable php-fpm service
       service:
         name: php-fpm

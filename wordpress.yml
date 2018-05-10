@@ -1,5 +1,5 @@
 ---
-- hosts: centos-node2.random.com
+- hosts: centos-node5.random.com
   become: True
   become_user: root
   tasks:
@@ -16,12 +16,12 @@
        priv: 'wordpress.*:ALL'
        state: present
 #
-- hosts: webservers
+- hosts: centos-node2.random.com
   become: True
   become_user: root
   vars:
    wp_mysql_db: wordpress
-   wp_mysql_host: localhost
+   wp_mysql_host: centos-node5.random.com
    wp_mysql_user: wuser
 #
   tasks:
@@ -56,3 +56,7 @@
          - {'regexp': "define\\('DB_USER', '(.)+'\\);", 'line': "define('DB_USER', '{{wp_mysql_user}}');"}
          - {'regexp': "define\\('DB_PASSWORD', '(.)+'\\);", 'line': "define('DB_PASSWORD', '{{ lookup ( 'file','files/wordpress_password.txt' )}}');"}
          - {'regexp': "define\\('DB_HOST', '(.)+'\\);", 'line': "define('DB_HOST', '{{wp_mysql_host}}');"}
+#
+   - name: disable selinux
+     selinux:
+      state: disabled
