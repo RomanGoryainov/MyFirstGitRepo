@@ -1,7 +1,8 @@
+---
 - name: Enable EPEL Repository and update all servers
   hosts: allservers
   order: sorted
-  become: True
+  become: true
   become_user: root
   tasks:
     - name: Install EPEL7 Repository
