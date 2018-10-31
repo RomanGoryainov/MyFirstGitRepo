@@ -1,0 +1,238 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Create VPC, subnets, internet gateway, nat gateway, security group.'
+Parameters:
+  SSHLocation:
+    Description: Lockdown SSH access to the known network
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: 10.0.0.0/16
+    Public:
+      CIDR: 10.0.1.0/24
+    Private1:
+      CIDR: 10.0.2.0/24
+    Private2:
+      CIDR: 10.0.3.0/24
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - VPC
+        - CIDR
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Name
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Public
+
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - Public
+        - CIDR
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs ''
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Public
+
+  PrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - Private1
+        - CIDR
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs ''
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Private1
+
+  PrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap 
+        - SubnetConfig
+        - Private2
+        - CIDR
+      AvailabilityZone: !Select 
+        - 2
+        - !GetAZs ''
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Private2
+
+  EIP:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Public
+
+  GatewayToInternet:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Public
+
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  NAT:
+    DependsOn: GatewayToInternet
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt 
+        - EIP
+        - AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: NATGateway
+
+  PrivateRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Network
+          Value: Private
+
+  PrivateRoute:
+    DependsOn: NAT
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NAT
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  EC2SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Enable SSH, HTTP access to the EC2 host'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHLocation
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  VPCId:
+    Description: VPCId of the newly created VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCID'
+  PublicSubnet:
+    Description: SubnetId of the public subnet
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicID'
+  PublicSubnetAZ:
+    Description: AZ for newely Public Subnet
+    Value: !GetAtt 
+      - PublicSubnet
+      - AvailabilityZone
+  PrivateSubnet1:
+    Description: SubnetId of the private subnet 1
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub '${AWS::StackName}-1-PrivateID'
+  PrivateSubnet2:
+    Description: SubnetId of the private subnet 2
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub '${AWS::StackName}-2-PrivateID'
+  PrivateSubnetAZ1:
+    Description: AZ for newely Private Subnet 1
+    Value: !GetAtt 
+      - PrivateSubnet1
+      - AvailabilityZone
+  PrivateSubnetAZ2:
+    Description: AZ for newely Private Subnet 2
+    Value: !GetAtt 
+      - PrivateSubnet2
+      - AvailabilityZone
+  InternetGateway:
+    Description: Id of the Internet Gateway
+    Value: !Ref InternetGateway
+  EC2SecurityGroup:
+    Description: SecurityGroupId of the Security Group
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-SecurityGroupID'
